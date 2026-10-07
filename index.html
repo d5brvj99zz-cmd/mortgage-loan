@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>住宅ローン返済シミュレーション・高精度ダッシュボード</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent: #0f766e;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 24px;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .saved-status {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: bold;
+            background: #ccfbf1;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 1000px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--primary-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .rate-row, .prepayment-row {
+            display: grid;
+            grid-template-columns: 80px 65px 85px 1fr 32px;
+            gap: 6px;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border: 1px dashed var(--border-color);
+        }
+        .prepayment-row {
+            grid-template-columns: 75px 55px 80px 85px 1fr 28px;
+            background: #fdf4ff;
+            border-color: #f5d0fe;
+        }
+        .rate-row input, .rate-row select, .prepayment-row input, .prepayment-row select {
+            padding: 4px 6px;
+            font-size: 13px;
+            background: #fff;
+        }
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-add {
+            background-color: var(--accent);
+            color: white;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .btn-add:hover { background-color: #0d9488; }
+        .btn-add-prepay {
+            background-color: #9333ea;
+            color: white;
+        }
+        .btn-add-prepay:hover { background-color: #7e22ce; }
+        .btn-del {
+            background-color: var(--danger);
+            color: white;
+            height: 28px;
+            width: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-del:hover { background-color: var(--danger-dark); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .metric-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        .chart-container {
+            position: relative;
+            height: 280px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .btn-calc {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        .btn-calc:hover { background-color: var(--primary-dark); }
+        .btn-io {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-io:hover { background: #cbd5e1; }
+        .detail-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .detail-box h3 {
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .detail-item span {
+            color: var(--text-muted);
+            display: block;
+            font-size: 11px;
+        }
+        .detail-item strong {
+            color: var(--text-main);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>住宅ローン返済シミュレーション・ダッシュボード</h1>
+            <p class="subtitle">5年ルール・125%ルール、複数金利変更、繰り上げ返済、ファイル入出力に対応。</p>
+        </div>
+        <div class="header-actions">
+            <div id="saveStatus" class="saved-status" style="display:none;">設定を記憶しました</div>
+            <button class="btn-io" onclick="exportData()">💾 エクスポート</button>
+            <button class="btn-io" onclick="document.getElementById('importFile').click()">📂 インポート</button>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+        </div>
+    </header>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-title">総返済額</div>
+            <div class="metric-value" id="valTotalPayment">-</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">総利息負担</div>
+            <div class="metric-value" id="valTotalInterest">-</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">当初毎月返済額</div>
+            <div class="metric-value" id="valMonthlyPayment">-</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- 左側：入力パネル -->
+        <div class="sidebar">
+            <div class="card">
+                <h2>1. 基本情報 & 開始時期</h2>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>返済開始 年 (西暦)</label>
+                        <input type="number" id="startYear" value="2026">
+                    </div>
+                    <div class="form-group">
+                        <label>返済開始 月</label>
+                        <select id="startMonth">
+                            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                            <option value="4" selected>4月</option><option value="5">5月</option><option value="6">6月</option>
+                            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>借入金額 (万円)</label>
+                    <input type="number" id="principal" value="4000" step="100">
+                </div>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>借入期間 (年)</label>
+                        <input type="number" id="years" value="35">
+                    </div>
+                    <div class="form-group">
+                        <label>当初金利 (％)</label>
+                        <input type="number" id="initialRate" value="0.5" step="0.05">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>返済方式</label>
+                    <select id="repaymentType">
+                        <option value="equalPayment">元利均等返済</option>
+                        <option value="equalPrincipal">元金均等返済</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: bold; color: var(--primary-dark);">
+                        <input type="checkbox" id="useRules" checked style="width: auto; height: 16px;"> 5年ルール・125%ルールを適用する
+                    </label>
+                </div>
+            </div>
+
+            <!-- 金利見直しスケジュール -->
+            <div class="card">
+                <h2>
+                    <span>金利見直しスケジュール</span>
+                    <button type="button" class="btn-sm btn-add" style="width:auto; padding:4px 8px;" onclick="addRateRow()">＋ 追加</button>
+                </h2>
+                <div style="display: grid; grid-template-columns: 80px 65px 85px 1fr 32px; gap: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; padding: 0 4px;">
+                    <div>変更年</div><div>月</div><div>金利(%)</div><div></div><div></div>
+                </div>
+                <div id="rateRowsContainer"></div>
+            </div>
+
+            <!-- 繰り上げ返済スケジュール -->
+            <div class="card">
+                <h2>
+                    <span>繰り上げ返済スケジュール</span>
+                    <button type="button" class="btn-sm btn-add btn-add-prepay" style="width:auto; padding:4px 8px;" onclick="addPrepaymentRow()">＋ 追加</button>
+                </h2>
+                <div style="display: grid; grid-template-columns: 75px 55px 80px 85px 1fr 28px; gap: 4px; font-size: 10px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; padding: 0 2px;">
+                    <div>年</div><div>月</div><div>金額(万)</div><div>タイプ</div><div></div><div></div>
+                </div>
+                <div id="prepaymentRowsContainer"></div>
+                <button class="btn-calc" onclick="runSimulation()">シミュレーション実行</button>
+            </div>
+
+            <!-- 指定年月の詳細打ち合わせ -->
+            <div class="card">
+                <h2>指定年月の返済打ち合わせ</h2>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>確認したい年</label>
+                        <input type="number" id="checkYear" value="2036">
+                    </div>
+                    <div class="form-group">
+                        <label>月</label>
+                        <select id="checkMonth">
+                            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                            <option value="4" selected>4月</option><option value="5">5月</option><option value="6">6月</option>
+                            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-calc" style="background-color: var(--accent); margin-top:4px;" onclick="showMonthDetail()">この年月の状況を表示</button>
+
+                <div class="detail-box" id="detailBox" style="display:none;">
+                    <h3 id="detailTitle">2036年4月の返済状況</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item"><span>適用金利</span><strong id="detRate">-</strong></div>
+                        <div class="detail-item"><span>月々返済額</span><strong id="detPayment">-</strong></div>
+                        <div class="detail-item"><span>内：元金</span><strong id="detPrincipal">-</strong></div>
+                        <div class="detail-item"><span>内：利息</span><strong id="detInterest">-</strong></div>
+                        <div class="detail-item" style="grid-column: span 2;"><span>当月末ローン残高</span><strong id="detBalance" style="color:var(--primary); font-size:16px;">-</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：グラフエリア -->
+        <div class="main-content">
+            <div class="card">
+                <h2>ローン残高の推移（西暦年ベース）</h2>
+                <div class="chart-container">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>年間返済額の内訳：元金 vs 利息（西暦年ベース）</h2>
+                <div class="chart-container">
+                    <canvas id="yearlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let balanceChartInstance = null;
+    let yearlyChartInstance = null;
+    let globalMonthlyLog = [];
+
+    function addRateRow(year = 2036, month = 4, rate = 1.25) {
+        const container = document.getElementById('rateRowsContainer');
+        const div = document.createElement('div');
+        div.className = 'rate-row';
+        div.innerHTML = `
+            <div><input type="number" class="r-year" value="${year}"></div>
+            <div>
+                <select class="r-month">
+                    ${[...Array(12)].map((_, i) => `<option value="${i+1}" ${i+1==month?'selected':''}>${i+1}月</option>`).join('')}
+                </select>
+            </div>
+            <div><input type="number" class="r-rate" value="${rate}" step="0.05"></div>
+            <div></div>
+            <div><button type="button" class="btn-del" onclick="this.closest('.rate-row').remove(); saveToStorage(); runSimulation();">×</button></div>
+        `;
+        container.appendChild(div);
+    }
+
+    function addPrepaymentRow(year = 2031, month = 4, amount = 100, type = 'term') {
+        const container = document.getElementById('prepaymentRowsContainer');
+        const div = document.createElement('div');
+        div.className = 'prepayment-row';
+        div.innerHTML = `
+            <div><input type="number" class="p-year" value="${year}"></div>
+            <div>
+                <select class="p-month">
+                    ${[...Array(12)].map((_, i) => `<option value="${i+1}" ${i+1==month?'selected':''}>${i+1}月</option>`).join('')}
+                </select>
+            </div>
+            <div><input type="number" class="p-amount" value="${amount}" step="10"></div>
+            <div>
+                <select class="p-type">
+                    <option value="term" ${type=='term'?'selected':''}>期間短縮</option>
+                    <option value="payment" ${type=='payment'?'selected':''}>返済額軽減</option>
+                </select>
+            </div>
+            <div></div>
+            <div><button type="button" class="btn-del" onclick="this.closest('.prepayment-row').remove(); saveToStorage(); runSimulation();">×</button></div>
+        `;
+        container.appendChild(div);
+    }
+
+    function calcEqualPayment(p, r, m) {
+        if (r === 0 || m <= 0) return p / Math.max(1, m);
+        return p * (r * Math.pow(1 + r, m)) / (Math.pow(1 + r, m) - 1);
+    }
+
+    function saveToStorage() {
+        const data = collectFormData();
+        localStorage.setItem('loan_sim_data_v5', JSON.stringify(data));
+        
+        const status = document.getElementById('saveStatus');
+        status.style.display = 'block';
+        setTimeout(() => { status.style.display = 'none'; }, 2000);
+    }
+
+    function collectFormData() {
+        const data = {
+            startYear: document.getElementById('startYear').value,
+            startMonth: document.getElementById('startMonth').value,
+            principal: document.getElementById('principal').value,
+            years: document.getElementById('years').value,
+            initialRate: document.getElementById('initialRate').value,
+            repaymentType: document.getElementById('repaymentType').value,
+            useRules: document.getElementById('useRules').checked,
+            checkYear: document.getElementById('checkYear').value,
+            checkMonth: document.getElementById('checkMonth').value,
+            rateChanges: [],
+            prepayments: []
+        };
+
+        document.querySelectorAll('.rate-row').forEach(row => {
+            data.rateChanges.push({
+                year: row.querySelector('.r-year').value,
+                month: row.querySelector('.r-month').value,
+                rate: row.querySelector('.r-rate').value
+            });
+        });
+
+        document.querySelectorAll('.prepayment-row').forEach(row => {
+            data.prepayments.push({
+                year: row.querySelector('.p-year').value,
+                month: row.querySelector('.p-month').value,
+                amount: row.querySelector('.p-amount').value,
+                type: row.querySelector('.p-type').value
+            });
+        });
+
+        return data;
+    }
+
+    function loadFromData(data) {
+        if (!data) return;
+        document.getElementById('startYear').value = data.startYear || 2026;
+        document.getElementById('startMonth').value = data.startMonth || 4;
+        document.getElementById('principal').value = data.principal || 4000;
+        document.getElementById('years').value = data.years || 35;
+        document.getElementById('initialRate').value = data.initialRate || 0.5;
+        document.getElementById('repaymentType').value = data.repaymentType || 'equalPayment';
+        if (data.useRules !== undefined) document.getElementById('useRules').checked = data.useRules;
+        if (data.checkYear) document.getElementById('checkYear').value = data.checkYear;
+        if (data.checkMonth) document.getElementById('checkMonth').value = data.checkMonth;
+
+        document.getElementById('rateRowsContainer').innerHTML = '';
+        if (data.rateChanges && data.rateChanges.length > 0) {
+            data.rateChanges.forEach(rc => addRateRow(rc.year, rc.month, rc.rate));
+        }
+
+        document.getElementById('prepaymentRowsContainer').innerHTML = '';
+        if (data.prepayments && data.prepayments.length > 0) {
+            data.prepayments.forEach(pp => addPrepaymentRow(pp.year, pp.month, pp.amount, pp.type));
+        }
+    }
+
+    function loadFromStorage() {
+        const saved = localStorage.getItem('loan_sim_data_v5');
+        if (saved) {
+            try {
+                loadFromData(JSON.parse(saved));
+                return;
+            } catch(e) {}
+        }
+        addRateRow(2036, 4, 1.25);
+        addRateRow(2041, 4, 1.75);
+        addPrepaymentRow(2031, 4, 100, 'term');
+    }
+
+    function exportData() {
+        const data = collectFormData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `loan_simulation_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                loadFromData(data);
+                saveToStorage();
+                runSimulation();
+                alert('設定ファイルを正常にインポートしました！');
+            } catch(err) {
+                alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function runSimulation() {
+        saveToStorage();
+
+        const startYear = parseInt(document.getElementById('startYear').value);
+        const startMonth = parseInt(document.getElementById('startMonth').value);
+        const principal = parseFloat(document.getElementById('principal').value) * 10000;
+        const totalYears = parseInt(document.getElementById('years').value);
+        const initialRate = parseFloat(document.getElementById('initialRate').value) / 100 / 12;
+        const repaymentType = document.getElementById('repaymentType').value;
+        const useRules = document.getElementById('useRules').checked;
+
+        let rateChanges = [];
+        document.querySelectorAll('.rate-row').forEach(row => {
+            let y = parseInt(row.querySelector('.r-year').value);
+            let m = parseInt(row.querySelector('.r-month').value);
+            let r = parseFloat(row.querySelector('.r-rate').value) / 100 / 12;
+            let absoluteMonthIndex = (y - startYear) * 12 + (m - startMonth) + 1;
+            if (absoluteMonthIndex > 1) {
+                rateChanges.push({ monthIndex: absoluteMonthIndex, rate: r });
+            }
+        });
+        rateChanges.sort((a, b) => a.monthIndex - b.monthIndex);
+
+        let prepayments = [];
+        document.querySelectorAll('.prepayment-row').forEach(row => {
+            let y = parseInt(row.querySelector('.p-year').value);
+            let m = parseInt(row.querySelector('.p-month').value);
+            let amt = parseFloat(row.querySelector('.p-amount').value) * 10000;
+            let type = row.querySelector('.p-type').value;
+            let absoluteMonthIndex = (y - startYear) * 12 + (m - startMonth) + 1;
+            if (absoluteMonthIndex >= 1) {
+                prepayments.push({ monthIndex: absoluteMonthIndex, amount: amt, type: type });
+            }
+        });
+
+        const totalMonths = totalYears * 12;
+        let balance = principal;
+        let totalPayment = 0;
+        let totalInterest = 0;
+        let firstMonthlyPayment = 0;
+
+        globalMonthlyLog = [];
+
+        let currentRate = initialRate;
+        let remainingMonths = totalMonths;
+        let monthlyPayment = repaymentType === 'equalPayment' ? calcEqualPayment(balance, currentRate, remainingMonths) : 0;
+        firstMonthlyPayment = monthlyPayment;
+
+        let lastReviewPayment = monthlyPayment;
+
+        let curYearPrincipal = 0;
+        let curYearInterest = 0;
+
+        let balanceHistory = [];
+        let labels = [];
+        let yearlyPrincipalPaid = [];
+        let yearlyInterestPaid = [];
+        let yearlyLabels = [];
+
+        let currentYear = startYear;
+        let currentMonth = startMonth;
+
+        balanceHistory.push(Math.round(balance / 10000));
+        labels.push(startYear + '年');
+
+        for (let m = 1; m <= totalMonths; m++) {
+            if (balance <= 0) break;
+
+            let matchedChange = rateChanges.find(c => c.monthIndex === m);
+            if (matchedChange) {
+                currentRate = matchedChange.rate;
+            }
+
+            if (repaymentType === 'equalPayment') {
+                if (!useRules) {
+                    if (matchedChange || m === 1) {
+                        remainingMonths = totalMonths - m + 1;
+                        monthlyPayment = calcEqualPayment(balance, currentRate, remainingMonths);
+                    }
+                } else {
+                    if (m === 1 || (m - 1) % 60 === 0) {
+                        remainingMonths = totalMonths - m + 1;
+                        let newlyCalculated = calcEqualPayment(balance, currentRate, remainingMonths);
+                        if (m === 1) {
+                            monthlyPayment = newlyCalculated;
+                        } else {
+                            let capPayment = lastReviewPayment * 1.25;
+                            monthlyPayment = Math.min(newlyCalculated, capPayment);
+                        }
+                        lastReviewPayment = monthlyPayment;
+                    }
+                }
+            } else {
+                let initialPrincipalPerMonth = principal / totalMonths;
+                monthlyPayment = initialPrincipalPerMonth + (balance * currentRate);
+            }
+
+            let interest = balance * currentRate;
+            let principalPaid = 0;
+
+            if (repaymentType === 'equalPayment') {
+                principalPaid = monthlyPayment - interest;
+            } else {
+                principalPaid = principal / totalMonths;
+            }
+
+            if (principalPaid >= balance || m === totalMonths) {
+                principalPaid = balance;
+                monthlyPayment = principalPaid + interest;
+            }
+
+            balance -= principalPaid;
+            totalPayment += monthlyPayment;
+            totalInterest += interest;
+
+            curYearPrincipal += principalPaid;
+            curYearInterest += interest;
+
+            // 繰り上げ返済の処理
+            let prepayLog = 0;
+            let matchedPrepay = prepayments.find(p => p.monthIndex === m);
+            if (matchedPrepay && balance > 0) {
+                let prepayAmount = Math.min(matchedPrepay.amount, balance);
+                balance -= prepayAmount;
+                totalPayment += prepayAmount;
+                prepayLog = prepayAmount;
+                curYearPrincipal += prepayAmount;
+
+                if (repaymentType === 'equalPayment') {
+                    remainingMonths = totalMonths - m;
+                    if (matchedPrepay.type === 'term') {
+                        // 期間短縮型：毎月返済額は維持し、期間を縮める
+                    } else {
+                        // 返済額軽減型：期間はそのまま、返済額を再計算
+                        monthlyPayment = calcEqualPayment(balance, currentRate, remainingMonths);
+                        lastReviewPayment = monthlyPayment;
+                    }
+                }
+            }
+
+            globalMonthlyLog.push({
+                year: currentYear,
+                month: currentMonth,
+                rate: currentRate * 12 * 100,
+                payment: Math.round(monthlyPayment),
+                principalPaid: Math.round(principalPaid + prepayLog),
+                interestPaid: Math.round(interest),
+                balance: Math.max(0, Math.round(balance))
+            });
+
+            // 年末または完済月にデータを確定
+            if (currentMonth === 12 || balance <= 0 || m === totalMonths) {
+                balanceHistory.push(Math.max(0, Math.round(balance / 10000)));
+                labels.push(currentYear + '年');
+
+                yearlyPrincipalPaid.push(Math.round(curYearPrincipal / 10000));
+                yearlyInterestPaid.push(Math.round(curYearInterest / 10000));
+                yearlyLabels.push(currentYear + '年');
+
+                curYearPrincipal = 0;
+                curYearInterest = 0;
+            }
+
+            if (balance <= 0) break;
+
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+        }
+
+        document.getElementById('valTotalPayment').innerText = Math.round(totalPayment / 10000).toLocaleString() + ' 万円';
+        document.getElementById('valTotalInterest').innerText = Math.round(totalInterest / 10000).toLocaleString() + ' 万円';
+        document.getElementById('valMonthlyPayment').innerText = Math.round(firstMonthlyPayment).toLocaleString() + ' 円';
+
+        updateCharts(labels, balanceHistory, yearlyLabels, yearlyPrincipalPaid, yearlyInterestPaid);
+        showMonthDetail();
+    }
+
+    function showMonthDetail() {
+        const targetYear = parseInt(document.getElementById('checkYear').value);
+        const targetMonth = parseInt(document.getElementById('checkMonth').value);
+
+        const found = globalMonthlyLog.find(log => log.year === targetYear && log.month === targetMonth);
+        const detailBox = document.getElementById('detailBox');
+        
+        if (found) {
+            detailBox.style.display = 'block';
+            document.getElementById('detailTitle').innerText = `${found.year}年${found.month}月の返済状況`;
+            document.getElementById('detRate').innerText = found.rate.toFixed(2) + ' %';
+            document.getElementById('detPayment').innerText = found.payment.toLocaleString() + ' 円';
+            document.getElementById('detPrincipal').innerText = found.principalPaid.toLocaleString() + ' 円';
+            document.getElementById('detInterest').innerText = found.interestPaid.toLocaleString() + ' 円';
+            document.getElementById('detBalance').innerText = Math.round(found.balance / 10000).toLocaleString() + ' 万円 (' + found.balance.toLocaleString() + ' 円)';
+        } else {
+            detailBox.style.display = 'block';
+            document.getElementById('detailTitle').innerText = `${targetYear}年${targetMonth}月`;
+            document.getElementById('detRate').innerText = '-';
+            document.getElementById('detPayment').innerText = '期間外（完済後または範囲外）';
+            document.getElementById('detPrincipal').innerText = '-';
+            document.getElementById('detInterest').innerText = '-';
+            document.getElementById('detBalance').innerText = '- 万円';
+        }
+    }
+
+    function updateCharts(labels, balanceData, yearlyLabels, principalData, interestData) {
+        const ctxBalance = document.getElementById('balanceChart').getContext('2d');
+        if (balanceChartInstance) balanceChartInstance.destroy();
+
+        balanceChartInstance = new Chart(ctxBalance, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'ローン残高 (万円)',
+                    data: balanceData,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: '残高 (万円)' } }
+                }
+            }
+        });
+
+        const ctxYearly = document.getElementById('yearlyChart').getContext('2d');
+        if (yearlyChartInstance) yearlyChartInstance.destroy();
+
+        yearlyChartInstance = new Chart(ctxYearly, {
+            type: 'bar',
+            data: {
+                labels: yearlyLabels,
+                datasets: [
+                    { label: '元金返済額 (万円)', data: principalData, backgroundColor: '#3b82f6' },
+                    { label: '利息支払額 (万円)', data: interestData, backgroundColor: '#f59e0b' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, title: { display: true, text: '年間支払額 (万円)' } }
+                }
+            }
+        });
+    }
+
+    window.onload = function() {
+        loadFromStorage();
+        runSimulation();
+    };
+</script>
+
+</body>
+</html>
