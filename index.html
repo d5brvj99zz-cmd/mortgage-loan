@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>住宅ローン返済シミュレーション・高精度ダッシュボード</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -27,32 +28,35 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 24px;
+            padding: 16px;
         }
         .container {
             max-width: 1300px;
             margin: 0 auto;
         }
         header {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         p.subtitle {
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
         }
         .header-actions {
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .saved-status {
             font-size: 12px;
@@ -65,9 +69,9 @@
         .dashboard-grid {
             display: grid;
             grid-template-columns: 420px 1fr;
-            gap: 24px;
+            gap: 20px;
         }
-        @media (max-width: 1000px) {
+        @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -75,40 +79,43 @@
         .card {
             background: var(--card-bg);
             border-radius: 12px;
-            padding: 20px;
+            padding: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid var(--border-color);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .card h2 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             padding-bottom: 8px;
             border-bottom: 2px solid var(--border-color);
             color: var(--primary-dark);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .form-group {
             margin-bottom: 12px;
         }
         label {
             display: block;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             margin-bottom: 4px;
             color: var(--text-main);
         }
         input, select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 15px; /* スマホで拡大されない16pxに近いサイズ */
             outline: none;
             transition: border-color 0.2s;
+            background: #fff;
         }
         input:focus, select:focus {
             border-color: var(--primary);
@@ -116,33 +123,32 @@
         .row-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
         }
         .rate-row, .prepayment-row {
             display: grid;
-            grid-template-columns: 80px 65px 85px 1fr 32px;
+            grid-template-columns: 75px 60px 80px 1fr 32px;
             gap: 6px;
             align-items: center;
             background: #f1f5f9;
-            padding: 6px 8px;
-            border-radius: 6px;
-            margin-bottom: 6px;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 8px;
             border: 1px dashed var(--border-color);
         }
         .prepayment-row {
-            grid-template-columns: 75px 55px 80px 85px 1fr 28px;
+            grid-template-columns: 70px 50px 75px 80px 1fr 28px;
             background: #fdf4ff;
             border-color: #f5d0fe;
         }
         .rate-row input, .rate-row select, .prepayment-row input, .prepayment-row select {
-            padding: 4px 6px;
+            padding: 6px;
             font-size: 13px;
-            background: #fff;
         }
         .btn-sm {
-            padding: 6px 10px;
-            font-size: 12px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
             font-weight: bold;
@@ -162,33 +168,47 @@
         .btn-del {
             background-color: var(--danger);
             color: white;
-            height: 28px;
-            width: 28px;
+            height: 32px;
+            width: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
         }
         .btn-del:hover { background-color: var(--danger-dark); }
 
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .metrics-grid {
                 grid-template-columns: 1fr;
+            }
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 18px;
+            }
+            .rate-row {
+                grid-template-columns: 65px 55px 70px 1fr 28px;
+                font-size: 12px;
+            }
+            .prepayment-row {
+                grid-template-columns: 60px 45px 65px 70px 1fr 28px;
+                font-size: 11px;
             }
         }
         .metric-card {
             background: var(--card-bg);
             border-radius: 10px;
-            padding: 16px;
+            padding: 14px;
             border: 1px solid var(--border-color);
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
@@ -199,24 +219,29 @@
             margin-bottom: 4px;
         }
         .metric-value {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--primary-dark);
         }
         .chart-container {
             position: relative;
-            height: 280px;
+            height: 260px;
             width: 100%;
             margin-bottom: 10px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 220px;
+            }
         }
         .btn-calc {
             width: 100%;
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 15px;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
@@ -227,9 +252,9 @@
             background: #e2e8f0;
             color: var(--text-main);
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
         }
@@ -242,7 +267,7 @@
             margin-top: 12px;
         }
         .detail-box h3 {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--accent);
             margin-bottom: 8px;
             font-weight: bold;
@@ -250,7 +275,7 @@
         .detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
             font-size: 13px;
         }
         .detail-item span {
@@ -260,7 +285,7 @@
         }
         .detail-item strong {
             color: var(--text-main);
-            font-size: 14px;
+            font-size: 15px;
         }
     </style>
 </head>
@@ -269,13 +294,13 @@
 <div class="container">
     <header>
         <div>
-            <h1>住宅ローン返済シミュレーション・ダッシュボード</h1>
-            <p class="subtitle">5年ルール・125%ルール、複数金利変更、繰り上げ返済、ファイル入出力に対応。</p>
+            <h1>住宅ローン返済シミュレーション</h1>
+            <p class="subtitle">5年ルール・125%ルール、複数金利・繰り上げ返済対応</p>
         </div>
         <div class="header-actions">
             <div id="saveStatus" class="saved-status" style="display:none;">設定を記憶しました</div>
-            <button class="btn-io" onclick="exportData()">💾 エクスポート</button>
-            <button class="btn-io" onclick="document.getElementById('importFile').click()">📂 インポート</button>
+            <button class="btn-io" onclick="exportData()">💾 保存</button>
+            <button class="btn-io" onclick="document.getElementById('importFile').click()">📂 読込</button>
             <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
         </div>
     </header>
@@ -336,9 +361,9 @@
                         <option value="equalPrincipal">元金均等返済</option>
                     </select>
                 </div>
-                <div class="form-group" style="margin-top: 12px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: bold; color: var(--primary-dark);">
-                        <input type="checkbox" id="useRules" checked style="width: auto; height: 16px;"> 5年ルール・125%ルールを適用する
+                <div class="form-group" style="margin-top: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: bold; color: var(--primary-dark);">
+                        <input type="checkbox" id="useRules" checked style="width: auto; height: 18px;"> 5年ルール・125%ルールを適用する
                     </label>
                 </div>
             </div>
@@ -347,9 +372,9 @@
             <div class="card">
                 <h2>
                     <span>金利見直しスケジュール</span>
-                    <button type="button" class="btn-sm btn-add" style="width:auto; padding:4px 8px;" onclick="addRateRow()">＋ 追加</button>
+                    <button type="button" class="btn-sm btn-add" style="width:auto; padding:6px 10px;" onclick="addRateRow()">＋ 追加</button>
                 </h2>
-                <div style="display: grid; grid-template-columns: 80px 65px 85px 1fr 32px; gap: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; padding: 0 4px;">
+                <div style="display: grid; grid-template-columns: 75px 60px 80px 1fr 32px; gap: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; padding: 0 4px;">
                     <div>変更年</div><div>月</div><div>金利(%)</div><div></div><div></div>
                 </div>
                 <div id="rateRowsContainer"></div>
@@ -359,9 +384,9 @@
             <div class="card">
                 <h2>
                     <span>繰り上げ返済スケジュール</span>
-                    <button type="button" class="btn-sm btn-add btn-add-prepay" style="width:auto; padding:4px 8px;" onclick="addPrepaymentRow()">＋ 追加</button>
+                    <button type="button" class="btn-sm btn-add btn-add-prepay" style="width:auto; padding:6px 10px;" onclick="addPrepaymentRow()">＋ 追加</button>
                 </h2>
-                <div style="display: grid; grid-template-columns: 75px 55px 80px 85px 1fr 28px; gap: 4px; font-size: 10px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; padding: 0 2px;">
+                <div style="display: grid; grid-template-columns: 70px 50px 75px 80px 1fr 28px; gap: 4px; font-size: 10px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; padding: 0 2px;">
                     <div>年</div><div>月</div><div>金額(万)</div><div>タイプ</div><div></div><div></div>
                 </div>
                 <div id="prepaymentRowsContainer"></div>
@@ -370,7 +395,7 @@
 
             <!-- 指定年月の詳細打ち合わせ -->
             <div class="card">
-                <h2>指定年月の返済打ち合わせ</h2>
+                <h2>指定年月の返済状況</h2>
                 <div class="row-2">
                     <div class="form-group">
                         <label>確認したい年</label>
@@ -411,7 +436,7 @@
             </div>
 
             <div class="card">
-                <h2>年間返済額の内訳：元金 vs 利息（西暦年ベース）</h2>
+                <h2>年間返済額の内訳：元金 vs 利息</h2>
                 <div class="chart-container">
                     <canvas id="yearlyChart"></canvas>
                 </div>
@@ -472,9 +497,19 @@
         return p * (r * Math.pow(1 + r, m)) / (Math.pow(1 + r, m) - 1);
     }
 
+    function calcRemainingMonthsByPayment(p, r, pmt) {
+        if (p <= 0) return 0;
+        if (r === 0) return Math.ceil(p / pmt);
+        let numerator = pmt;
+        let denominator = pmt - (p * r);
+        if (denominator <= 0) return 9999;
+        let m = Math.log(numerator / denominator) / Math.log(1 + r);
+        return Math.max(1, Math.round(m));
+    }
+
     function saveToStorage() {
         const data = collectFormData();
-        localStorage.setItem('loan_sim_data_v5', JSON.stringify(data));
+        localStorage.setItem('loan_sim_data_v6', JSON.stringify(data));
         
         const status = document.getElementById('saveStatus');
         status.style.display = 'block';
@@ -540,7 +575,7 @@
     }
 
     function loadFromStorage() {
-        const saved = localStorage.getItem('loan_sim_data_v5');
+        const saved = localStorage.getItem('loan_sim_data_v6');
         if (saved) {
             try {
                 loadFromData(JSON.parse(saved));
@@ -658,12 +693,10 @@
             if (repaymentType === 'equalPayment') {
                 if (!useRules) {
                     if (matchedChange || m === 1) {
-                        remainingMonths = totalMonths - m + 1;
                         monthlyPayment = calcEqualPayment(balance, currentRate, remainingMonths);
                     }
                 } else {
                     if (m === 1 || (m - 1) % 60 === 0) {
-                        remainingMonths = totalMonths - m + 1;
                         let newlyCalculated = calcEqualPayment(balance, currentRate, remainingMonths);
                         if (m === 1) {
                             monthlyPayment = newlyCalculated;
@@ -700,7 +733,6 @@
             curYearPrincipal += principalPaid;
             curYearInterest += interest;
 
-            // 繰り上げ返済の処理
             let prepayLog = 0;
             let matchedPrepay = prepayments.find(p => p.monthIndex === m);
             if (matchedPrepay && balance > 0) {
@@ -711,11 +743,9 @@
                 curYearPrincipal += prepayAmount;
 
                 if (repaymentType === 'equalPayment') {
-                    remainingMonths = totalMonths - m;
                     if (matchedPrepay.type === 'term') {
-                        // 期間短縮型：毎月返済額は維持し、期間を縮める
+                        remainingMonths = calcRemainingMonthsByPayment(balance, currentRate, monthlyPayment);
                     } else {
-                        // 返済額軽減型：期間はそのまま、返済額を再計算
                         monthlyPayment = calcEqualPayment(balance, currentRate, remainingMonths);
                         lastReviewPayment = monthlyPayment;
                     }
@@ -732,7 +762,6 @@
                 balance: Math.max(0, Math.round(balance))
             });
 
-            // 年末または完済月にデータを確定
             if (currentMonth === 12 || balance <= 0 || m === totalMonths) {
                 balanceHistory.push(Math.max(0, Math.round(balance / 10000)));
                 labels.push(currentYear + '年');
@@ -746,6 +775,8 @@
             }
 
             if (balance <= 0) break;
+
+            remainingMonths--;
 
             currentMonth++;
             if (currentMonth > 12) {
